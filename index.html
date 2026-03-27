@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C Club - Systems Programming Community</title>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background: #061006;
+            color: #00ff41;
+            font-family: "Share Tech Mono", monospace;
+            font-size: 0.9rem;
+            line-height: 1.8;
+            overflow-x: hidden;
+            background-image: 
+                linear-gradient(rgba(0, 255, 65, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 65, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 9999;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(0, 0, 0, 0.08) 2px,
+                rgba(0, 0, 0, 0.08) 4px
+            );
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        @keyframes glitch {
+            0%, 100% { content: attr(data-text); }
+            25% { content: attr(data-glitch1); }
+            50% { content: attr(data-glitch2); }
+            75% { content: attr(data-glitch3); }
+        }
+
+        @keyframes typewriter {
+            to { width: 100%; }
+        }
+
+        @keyframes progressFill {
+            from { width: 0%; }
+            to { width: 100%; }
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+
+        @keyframes fadePulse {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ============= HUD FRAME ============= */
+        .hud-frame {
+            position: fixed;
+            inset: 20px;
+            border: 1px solid #00ff41;
+            pointer-events: none;
+            z-index: 1000;
+            box-shadow: inset 0 0 40px rgba(0, 255, 65, 0.1);
+        }
+
+        .hud-corner {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border: 2px solid #00ff41;
+        }
+
+        .hud-corner.top-left {
+            top: -21px;
+            left: -21px;
+            border-right: none;
+            border-bottom: none;
+        }
+
+        .hud-corner.top-right {
+            top: -21px;
+            right: -21px;
+            border-left: none;
+            border-bottom: none;
+        }
+
+        .hud-corner.bottom-left {
+            bottom: -21px;
+            left: -21px;
+            border-right: none;
+            border-top: none;
+        }
+
+        .hud-corner.bottom-right {
+            bottom: -21px;
+            right: -21px;
+            border-left: none;
+            border-top: none;
+        }
+
+        .hud-led {
+            position: fixed;
+            left: 30px;
+            width: 4px;
+            background: #00ff41;
+            box-shadow: 0 0 8px #00ff41;
+            z-index: 1000;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .hud-led:nth-child(2) {
+            height: 60px;
+            margin-top: -40px;
+        }
+
+        .hud-led:nth-child(3) {
+            height: 60px;
+            margin-top: 40px;
+        }
+
+        .hud-signal {
+            position: fixed;
+            right: 30px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 1000;
+        }
+
+        .hud-signal-bar {
+            width: 20px;
+            height: 6px;
+            background: #00ff41;
+            box-shadow: 0 0 6px #00ff41;
+            animation: pulseGlow 2s ease-in-out infinite;
+        }
+
+        .hud-clock {
+            position: fixed;
+            top: 35px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: "Share Tech Mono", monospace;
+            font-size: 0.7rem;
+            color: #00ff41;
+            z-index: 1000;
+            white-space: nowrap;
+        }
+
+        .hud-scroll-prompt {
+            position: fixed;
+            bottom: 35px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: "Share Tech Mono", monospace;
+            font-size: 0.7rem;
+            color: #00ff41;
+            z-index: 1000;
+            animation: fadePulse 2s ease-in-out infinite;
+        }
+
+        .nav-logo {
+            position: fixed;
+            top: 35px;
+            left: 40px;
+            font-family: "Press Start 2P", monospace;
+            font-size: 0.8rem;
+            color: #00ff41;
+            z-index: 1001;
+        }
+
+        .nav-sound {
+            position: fixed;
+            top: 35px;
+            right: 40px;
+            font-family: "Share Tech Mono", monospace;
+            font-size: 0.7rem;
+            color: #00ff41;
+            cursor: pointer;
+            z-index: 1001;
+            transition: all 0.3s ease;
+        }
+
+        .nav-sound:hover {
+            text-shadow: 0 0 8px rgba(0, 255, 65, 0.6);
+        }
+
+        /* ============= LOADING SCREEN ============= */
+        .loading-screen {
+            position: fixed;
+            inset: 0;
+            background: #061006;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 5000;
+            gap: 40px;
+        }
+
+        .loading-content {
+            text-align: center;
+            font-family: "Share Tech Mono", monospace;
+            font-size: 1rem;
+            color: #00ff41;
+            min-height: 100px;
+        }
+
+        .loading-line {
+            height: 1.5em;
+            min-height: 1.5em;
+        }
+
+        .progress-bar {
+            width: 200px;
+            height: 32px;
+            border: 1px solid #00ff41;
+            background: #061006;
+            position: relative;
+            box-shadow: 0 0 8px #00ff41;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #00ff41;
+            width: 0%;
+            animation: progressFill 2.5s linear forwards;
+        }
+
+        .launch-btn {
+            background: transparent;
+            border: 1px solid #00ff41;
+            color: #00ff41;
+            padding: 12px 32px;
+            font-family: "Share Tech Mono", monospace;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            opacity: 0;
+            animation: slideUp 0.6s ease forwards 2.6s;
+        }
+
+        .launch-btn:hover {
+            background: #00ff41;
+            color: #061006;
+        }
+
+        .loading-screen.hidden {
+            animation: fadeOut 0.8s ease forwards;
+            pointer-events: none;
+        }
+
+        @keyframes fadeOut {
+            to {
+                opacity: 0;
+            }
+        }
+
+        /* ============= SECTIONS ============= */
+        section {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #061006;
+            position: relative;
+            padding: 60px 20px;
+            overflow: hidden;
+        }
+
+        section > canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        section#events > canvas,
+        section#contact > canvas {
+            pointer-events: auto;
+        }
+
+        .section-content {
+            position: relative;
+            z-index: 100;
+            width: 100%;
+            max-width: 800px;
+            text-align: center;
+        }
+
+        /* ============= HERO ============= */
+        #hero {
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .hero-title {
+            font-family: "Bebas Neue", monospace;
+            font-size: clamp(8rem, 20vw, 22rem);
+            letter-spacing: -0.02em;
+            color: #00ff41;
+            text-shadow: 0 0 40px rgba(0, 255, 65, 0.5), 0 0 80px rgba(0, 255, 65, 0.2);
+            margin: 0;
+            line-height: 1;
+            animation: pulseGlow 4s ease-in-out infinite;
+        }
+
+        .role-label {
+            position: absolute;
+            font-family: "Share Tech Mono", monospace;
+            font-size: 0.75rem;
+            color: #00ff41;
+            z-index: 10;
+        }
+
+        .role-label.top-left {
+            top: 60px;
+            left: 60px;
+        }
+
+        .role-label.top-right {
+            top: 60px;
+            right: 60px;
+        }
+
+        .role-label.bottom-left {
+            bottom: 60px;
+            left: 60px;
+        }
+
+        .role-label.bottom-right {
+            bottom: 60px;
+            right: 60px;
+        }
+
+        .terminal-block {
+            background: #061006;
+            border: 1px solid #00ff41;
+            padding: 20px;
+            font-family: "Share Tech Mono", monospace;
+            font-size: 0.7rem;
+            color: #00ff41;
+            text-align: left;
+            max-width: 400px;
+            margin: 20px auto;
+        }
+
+        .terminal-line {
+            margin: 8px 0;
+            min-height: 1.2em;
+        }
+
+        .hero-boot {
+            position: absolute;
+            bottom: 80px;
+            left: 40px;
+        }
+
+        .join-btn {
+            position: absolute;
+            bottom: 80px;
+            right: 40px;
+            background: transparent;
+            border: 1px solid #00ff41;
+            color: #00ff41;
+            padding: 12px 32px;
+            font-family: "Share Tech Mono", monospace;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .join-btn:hover {
+            background: #00ff41;
+            color: #061006;
+        }
+
+        /* ============= ABOUT ============= */
+        .section-title {
+            font-family: "Bebas Neue", monospace;
+            font-size: 4rem;
+            color: #00ff41;
+            margin: 30px 0;
+            text-shadow: 0 0 20px rgba(0, 255, 65, 0.3);
+        }
+
+        .section-text {
+            color: rgba(0, 255, 65, 0.75);
+            line-height: 1.8;
+            margin: 30px auto;
+            max-width: 700px;
+            font-size: 0.9rem;
+        }
+
+        .section-content.fade-in {
+            animation: slideUp 0.7s ease forwards;
+        }
+
+        /* ============= EVENTS 3D ============= */
+        .event-popup {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 4000;
+            pointer-events: auto;
+        }
+
+        .event-popup.active {
+            display: flex;
+        }
+
+        .popup-content {
+            background: #061006;
+            border: 1px solid #00ff41;
+            padding: 40px;
+            max-width: 600px;
+            color: #00ff41;
+            font-family: "Share Tech Mono", monospace;
+            position: relative;
+        }
+
+        .popup-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            cursor: pointer;
+            font-size: 1.5rem;
+            color: #00ff41;
+            transition: all 0.3s ease;
+        }
+
+        .popup-close:hover {
+            text-shadow: 0 0 8px rgba(0, 255, 65, 0.6);
+        }
+
+        .popup-header {
+            margin-bottom: 20px;
+            border-bottom: 1px solid #00ff41;
+            padding-bottom: 10px;
+        }
+
+        .popup-title {
+            font-family: "Bebas Neue", monospace;
+            font-size: 1.5rem;
+            margin: 10px 0;
+        }
+
+        .popup-description {
+            margin: 20px 0;
+            line-height: 1.8;
+        }
+
+        .popup-tags {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 10px 0;
+            font-size: 0.7rem;
+        }
+
+        .popup-tag {
+            border: 1px solid #00ff41;
+            padding: 5px 10px;
+            color: rgba(0, 255, 65, 0.7);
+        }
+
+        /* ============= REGISTRATION ============= */
+        .form-label {
+            display: block;
+            margin-top: 20px;
+            margin-bottom: 8px;
+            font-size: 0.75rem;
+            color: rgba(0, 255, 65, 0.7);
+        }
+
+        .form-input {
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid #00ff41;
+            color: #00ff41;
+            font-family: "Share Tech Mono", monospace;
+            font-size: 0.9rem;
+            padding: 10px 4px;
+            outline: none;
+            width: 100%;
+            caret-color: #00ff41;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            border-bottom: 2px solid #00ff41;
+            box-shadow: 0 4px 8px rgba(0, 255, 65, 0.2);
+        }
+
+        .form-input::placeholder {
+            color: rgba(0, 255, 65, 0.4);
+        }
+
+        .registration-form {
+            text-align: left;
+            max-width: 500px;
+            margin: 40px auto;
+        }
+
+        .submit-btn {
+            background: transparent;
+            border: 1px solid #00ff41;
+            color: #00ff41;
+            padding: 12px 32px;
+            font-family: "Share Tech Mono", monospace;
+            font-size: 0.8rem;
+            cursor: pointer;
+            margin-top: 30px;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+
+        .submit-btn:hover {
+            background: #00ff41;
+            color: #061006;
+        }
+
+        /* ============= MEMBERS ============= */
+        .members-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .member-card {
+            background: #0a1a0a;
+            border: 1px solid rgba(0, 255, 65, 0.3);
+            padding: 24px;
+            text-align: center;
+            transition: all 0.3s ease;
+            animation: slideUp 0.7s ease forwards;
+        }
+
+        .member-card:nth-child(1) { animation-delay: 0s; }
+        .member-card:nth-child(2) { animation-delay: 0.15s; }
+        .member-card:nth-child(3) { animation-delay: 0.3s; }
+        .member-card:nth-child(4) { animation-delay: 0.45s; }
+        .member-card:nth-child(5) { animation-delay: 0.6s; }
+
+        .member-card:hover {
+            border-color: #00ff41;
+            box-shadow: 0 0 12px rgba(0, 255, 65, 0.4);
+        }
+
+        .member-avatar {
+            width: 60px;
+            height: 60px;
+            border: 1px solid #00ff41;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+            font-family: "Bebas Neue", monospace;
+            font-size: 1.5rem;
+            color: #00ff41;
+        }
+
+        .member-name {
+            font-family: "Bebas Neue", monospace;
+            font-size: 1.2rem;
+            margin: 10px 0;
+            color: #00ff41;
+        }
+
+        .member-role {
+            font-family: "Share Tech Mono", monospace;
+            font-size: 0.75rem;
+            color: rgba(0, 255, 65, 0.55);
+        }
+
+        /* ============= FOOTER ============= */
+        footer {
+            background: #061006;
+            border-top: 1px solid #00ff41;
+            padding: 40px 20px;
+            position: relative;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .footer-block {
+            text-align: left;
+        }
+
+        .footer-club-name {
+            font-family: "Bebas Neue", monospace;
+            font-size: 3rem;
+            color: #00ff41;
+            text-align: center;
+            margin: 30px 0;
+            text-shadow: 0 0 20px rgba(0, 255, 65, 0.3);
+        }
+
+        .footer-binary {
+            font-family: "Press Start 2P", monospace;
+            font-size: 0.5rem;
+            color: rgba(0, 255, 65, 0.55);
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .footer-copyright {
+            font-size: 0.75rem;
+            color: rgba(0, 255, 65, 0.7);
+            margin-top: 20px;
+        }
+
+        /* ============= RESPONSIVE ============= */
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 3rem;
+            }
+
+            .section-title {
+                font-size: 2rem;
+            }
+
+            .terminal-block {
+                font-size: 0.6rem;
+            }
+
+            .hud-frame {
+                display: none;
+            }
+
+            .hud-corner,
+            .hud-led,
+            .hud-signal,
+            .nav-logo {
+                display: none;
+            }
+
+            .nav-sound {
+                top: 20px;
+                right: 20px;
+                font-size: 0.6rem;
+            }
+
+            .hud-clock {
+                display: none;
+            }
+
+            .members-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .footer-content {
+                grid-template-columns: 1fr;
+            }
+
+            .footer-club-name {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- HUD FRAME -->
+    <div class="hud-frame">
+        <div class="hud-corner top-left"></div>
+        <div class="hud-corner top-right"></div>
+        <div class="hud-corner bottom-left"></div>
+        <div class="hud-corner bottom-right"></div>
+    </div>
+
+    <!-- HUD ELEMENTS -->
+    <div class="hud-led"></div>
+    <div class="hud-led"></div>
+    <div class="hud-signal">
+        <div class="hud-signal-bar"></div>
+        <div class="hud-signal-bar"></div>
+        <div class="hud-signal-bar"></div>
+        <div class="hud-signal-bar"></div>
+    </div>
+    <div class="hud-clock" id="hudClock">27-03-2026 00:00:00</div>
+    <div class="hud-scroll-prompt">scroll down</div>
+
+    <!-- NAVIGATION -->
+    <div class="nav-logo">CC</div>
+    <div class="nav-sound" id="navSound">> sound.off()</div>
+
+    <!-- LOADING SCREEN -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-content">
+            <div class="loading-line" id="loadLine1"></div>
+            <div class="loading-line" id="loadLine2"></div>
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill"></div>
+        </div>
+        <button class="launch-btn" id="launchBtn">launch interface</button>
+    </div>
+
+    <!-- HERO SECTION -->
+    <section id="hero">
+        <div class="role-label top-left" id="roleLabel1">C PROGRAMMER</div>
+        <div class="role-label top-right" id="roleLabel2">CODE ENTHUSIAST</div>
+        <div class="role-label bottom-left" id="roleLabel3">SYSTEMS THINKER</div>
+        <div class="role-label bottom-right" id="roleLabel4">PROBLEM SOLVER</div>
+
+        <h1 class="hero-title">C CLUB</h1>
+
+        <div class="terminal-block hero-boot">
+            <div class="terminal-line" id="bootLine1"></div>
+            <div class="terminal-line" id="bootLine2"></div>
+            <div class="terminal-line" id="bootLine3"></div>
+            <div class="terminal-line" id="bootLine4"></div>
+            <div class="terminal-line" id="bootLine5"></div>
+            <div class="terminal-line" id="bootCursor">█</div>
+        </div>
+
+        <button class="join-btn" onclick="document.getElementById('registration').scrollIntoView({behavior:'smooth'})">Join Club</button>
+    </section>
+
+    <!-- ABOUT SECTION -->
+    <section id="about">
+        <div class="section-content">
+            <div class="terminal-block">
+                <div class="terminal-line">></div>
+                <div class="terminal-line">></div>
+                <div class="terminal-line">></div>
+            </div>
+            <h2 class="section-title">About C Club</h2>
+            <div class="section-content fade-in">
+                <p class="section-text">
+                    C Club is the official programming community of the Department of Computer Science. We are a collective of curious minds united by a love for the C language — the foundation of all modern computing. From pointer arithmetic to OS internals, we explore the low-level world that powers everything. We run workshops, hackathons, debugging battles, and seminars to push every member further.
+                </p>
+                <p class="section-text" style="font-family: 'Press Start 2P', monospace; font-size: 0.6rem; color: rgba(0, 255, 65, 0.55); margin-top: 40px;">
+                    C Language · Pointers · Data Structures · Algorithms · Memory Management · Systems Programming
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- EVENTS SECTION (3D) -->
+    <section id="events">
+        <canvas id="eventsCanvas"></canvas>
+    </section>
+
+    <!-- EVENTS POPUP -->
+    <div class="event-popup" id="eventPopup">
+        <div class="popup-content">
+            <div class="popup-close" id="popupClose">×</div>
+            <div class="popup-header">
+                <div style="font-size: 0.7rem; color: rgba(0, 255, 65, 0.55);"><span id="popupIndex">000 . 001</span></div>
+                <div class="popup-title" id="popupTitle">Event Title</div>
+            </div>
+            <div id="popupDescription" class="popup-description">Event description goes here</div>
+            <div class="popup-tags" id="popupTags"></div>
+        </div>
+    </div>
+
+    <!-- REGISTRATION SECTION -->
+    <section id="registration">
+        <div class="section-content">
+            <div class="terminal-block">
+                <div class="terminal-line">></div>
+                <div class="terminal-line">></div>
+                <div class="terminal-line">></div>
+                <div class="terminal-line">></div>
+                <div class="terminal-line">></div>
+                <div class="terminal-line">></div>
+            </div>
+            <h2 class="section-title">Registration</h2>
+            <form class="registration-form" id="regForm">
+                <label class="form-label">> name_</label>
+                <input type="text" class="form-input" placeholder="enter your name" name="name" required>
+
+                <label class="form-label">> email_</label>
+                <input type="email" class="form-input" placeholder="enter your email" name="email" required>
+
+                <label class="form-label">> roll_number_</label>
+                <input type="text" class="form-input" placeholder="enter your roll number" name="roll" required>
+
+                <label class="form-label">> select_event_</label>
+                <select class="form-input" name="event" required>
+                    <option value="">choose an event</option>
+                    <option value="codesprint">CodeSprint</option>
+                    <option value="workshop">Pointer Workshop</option>
+                    <option value="debug">Debug Wars</option>
+                    <option value="systems">Systems Day</option>
+                </select>
+
+                <button type="submit" class="submit-btn">TRANSMIT</button>
+            </form>
+
+            <div id="successMsg" style="display:none; margin-top: 30px;">
+                <div class="terminal-block">
+                    <div class="terminal-line">> transmission received</div>
+                    <div class="terminal-line">> identity confirmed</div>
+                    <div class="terminal-line">> registration logged successfully</div>
+                    <div class="terminal-line">> welcome to C Club</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CONTACT SECTION (3D) -->
+    <section id="contact">
+        <canvas id="contactCanvas"></canvas>
+        <div class="terminal-block" style="position: absolute; bottom: 80px; left: 40px;">
+            <div class="terminal-line">></div>
+            <div class="terminal-line">></div>
+            <div class="terminal-line">></div>
+        </div>
+        <button class="join-btn" style="position: absolute; bottom: 80px; right: 40px;" onclick="document.getElementById('registration').scrollIntoView({behavior:'smooth'})">accept transmission</button>
+    </section>
+
+    <!-- MEMBERS SECTION -->
+    <section id="members">
+        <div class="section-content">
+            <div class="terminal-block">
+                <div class="terminal-line">></div>
+                <div class="terminal-line">></div>
+                <div class="terminal-line">></div>
+            </div>
+            <h2 class="section-title">Members</h2>
+            <div class="members-grid" id="membersGrid"></div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-block">
+                <div class="terminal-block">
+                    <div class="terminal-line">></div>
+                    <div class="terminal-line">></div>
+                    <div class="terminal-line">></div>
+                </div>
+            </div>
+            <div class="footer-block">
+                <div class="footer-copyright">© 2025 C Club | Department of Computer Science | Bengaluru</div>
+            </div>
+        </div>
+        <div class="footer-club-name">C CLUB</div>
+        <div class="footer-binary">01000011 . 01000011</div>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
