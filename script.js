@@ -27,11 +27,12 @@ const events = [
 ];
 
 const members = [
-    { initials: 'AK', name: 'Alex K', role: 'Club Lead' },
-    { initials: 'SR', name: 'Sam R', role: 'Technical Head' },
-    { initials: 'PM', name: 'Priya M', role: 'Events Head' },
-    { initials: 'DS', name: 'Dev S', role: 'Workshop Lead' },
-    { initials: 'AT', name: 'Anu T', role: 'Outreach Lead' }
+    { initials: 'UM', name: 'Uthkars M', role: 'Club Lead' },
+    { initials: 'A', name: 'Athrav', role: 'club Head' },
+    { initials: 'LP', name: 'Likith P', role: 'Technical Head' },
+    { initials: 'MU', name: 'M Unais', role: 'Workshop Lead' },
+    { initials: 'VY', name: 'Vaishnavi YashoKirthi', role: 'Outreach Lead' },
+    { initials: 'VM', name: 'Varshini Marni', role: 'Outreach Lead' }
 ];
 
 let soundEnabled = true;
@@ -232,15 +233,50 @@ function initEventsScene() {
     const particles = new THREE.Points(particleGeo, particleMat);
     eventsScene.add(particles);
 
+    // Helper function to create canvas texture with text
+    function createTextTexture(text, eventId) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 512;
+        canvas.height = 512;
+        const ctx = canvas.getContext('2d');
+
+        // Background
+        ctx.fillStyle = '#0a1f0a';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Border
+        ctx.strokeStyle = '#00ff41';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(10, 10, canvas.width - 20, canvas.height - 20);
+
+        // Event ID (small)
+        ctx.fillStyle = '#00ff41';
+        ctx.font = 'bold 24px "Courier New"';
+        ctx.textAlign = 'center';
+        ctx.fillText(eventId, canvas.width / 2, 80);
+
+        // Event name (large)
+        ctx.font = 'bold 56px "Arial"';
+        ctx.fillStyle = '#00ff41';
+        ctx.textAlign = 'center';
+        ctx.fillText(text, canvas.width / 2, 280);
+
+        const texture = new THREE.CanvasTexture(canvas);
+        return texture;
+    }
+
     // Create 4 event card panels
     for (let i = 0; i < 4; i++) {
         const angle = (Math.PI / 2) * i;
+        const event = events[i];
+        
+        // Create card with text texture
         const cardGeo = new THREE.PlaneGeometry(2.5, 3.5);
+        const textTexture = createTextTexture(event.name, event.id);
         const cardMat = new THREE.MeshBasicMaterial({
-            color: 0x0a1f0a,
+            map: textTexture,
             side: THREE.DoubleSide,
-            transparent: true,
-            opacity: 0.8
+            transparent: true
         });
         const cardMesh = new THREE.Mesh(cardGeo, cardMat);
 
@@ -401,28 +437,9 @@ function initMembersGrid() {
     });
 }
 
-// ==================== REGISTRATION FORM ====================
-document.getElementById('regForm').addEventListener('submit', (e) => {
-    e.preventDefault();
-    const formData = new FormData(e.target);
-    const name = formData.get('name');
-
-    e.target.style.display = 'none';
-    const successMsg = document.getElementById('successMsg');
-    successMsg.style.display = 'block';
-
-    // Update message with name
-    const lines = successMsg.querySelectorAll('.terminal-line');
-    if (lines[3]) {
-        lines[3].textContent += ` ${name}`;
-    }
-
-    setTimeout(() => {
-        e.target.style.display = 'block';
-        successMsg.style.display = 'none';
-        e.target.reset();
-    }, 5000);
-});
+// ==================== REGISTRATION LINK ====================
+// The registration link is set via the data-link attribute
+// You can update it later by changing the href on the #registrationLink element
 
 // ==================== INITIALIZE ALL ====================
 document.addEventListener('DOMContentLoaded', async () => {
